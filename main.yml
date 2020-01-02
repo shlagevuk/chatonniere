@@ -1,0 +1,71 @@
+---
+
+# installation docker
+- hosts: all
+  become: True
+  tasks:
+    - name: install docker for centos
+      block:
+      - name: install requierements
+        yum:
+          name:
+            - yum-utils
+            - device-mapper-persistent-data
+            - lvm2
+          state: present
+      - name: install docker repo
+        shell: |
+            yum-config-manager \
+            --add-repo \
+            https://download.docker.com/linux/centos/docker-ce.repo
+      - name: install docker-ce
+        yum:
+          name:
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+      - name: enable and start docker
+        systemd:
+          name: docker
+          state: started
+          enabled: True
+      when: ansible_distribution == "CentOS"
+
+    - name: install docker for debian
+      block:
+      - name: install requierements
+        apt:
+          name:
+            - apt-transport-https
+            - ca-certificates
+            - curl
+            - gnupg2
+            - software-properties-common
+          update_cache: True
+          state: present
+      - name: install docker gpg key
+        shell: |
+            curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
+      - name: install docker fingerprint key
+        shell: |
+            apt-key fingerprint 0EBFCD88
+      - name: install docker repo
+        shell: |
+            add-apt-repository \
+            "deb [arch=amd64] https://download.docker.com/linux/debian \
+            $(lsb_release -cs) \
+            stable"
+      - name: install docker-ce
+        apt:
+          name:
+            - docker-ce
+            - docker-ce-cli
+            - containerd.io
+          update_cache: True
+          state: present
+      - name: enable and start docker
+        systemd:
+          name: docker
+          state: started
+          enabled: True
+      when: ansible_distribution == "Debian"
